@@ -28,17 +28,19 @@ class BondedToken extends React.Component {
             <h2>Balance</h2>
             <label className="--bondedToken-eth">
               <input
+                readOnly={!!this.props.address}
                 type="number"
                 value={this.state.balance}
                 max={this.bigMax}
                 onChange={event => this.onChange(event, 'balance')} />
             </label>
-            <br/>
+            {!this.props.address && (
             <input 
               type="range"
               value={this.state.balance}
               max={this.bigMax}
-              onChange={event => this.onChange(event, 'balance')} /> 
+              onChange={event => this.onChange(event, 'balance')} /> )}
+           
           </div>
 
 
@@ -46,6 +48,7 @@ class BondedToken extends React.Component {
             <h2>Ratio</h2>
             <label className="--bondedToken-ratio">
             <input
+              readOnly={!!this.props.address}
               type="number"
               step="0.01"
               max="1"
@@ -53,30 +56,31 @@ class BondedToken extends React.Component {
               value={this.state.ratio}
               onChange={event => this.onChange(event, 'ratio')} />
             </label>
-            <br/>
+            {!this.props.address && (
             <input 
               type="range"
               value={this.state.ratio}
               max="1"
               step="0.01"
-              onChange={event => this.onChange(event, 'ratio')} /> 
+              onChange={event => this.onChange(event, 'ratio')} /> )}
           </div>
 
           <div>
             <h2>Total Supply</h2>
             <label className="--bondedToken-token">
               <input
+                readOnly={!!this.props.address}
                 type="number"
                 value={this.state.totalSupply}
                 max={this.bigMax}
                 onChange={event => this.onChange(event, 'totalSupply')} />
             </label>
-            <br/>
+            {!this.props.address && (
             <input 
               type="range"
               value={this.state.totalSupply}
               max={this.bigMax} 
-              onChange={event => this.onChange(event, 'totalSupply')} /> 
+              onChange={event => this.onChange(event, 'totalSupply')} /> )}
           </div>
           
         </div>
@@ -88,14 +92,14 @@ class BondedToken extends React.Component {
             <label className={this.state.isBuy ? "--bondedToken-eth" : "--bondedToken-token"}>
               <input
                 type="number"
-                max={this.state.isBuy ? this.bigMax : this.state.totalSupply}
+                max={this.state.isBuy ? (this.props.address ? this.state.walletBalance : this.bigMax) : (this.props.address ? this.state.tokenBalance : this.state.totalSupply)}
                 value={this.state.amount}
                 onChange={event => this.onChange(event, 'amount')} />
             </label>
             <br/>
             <input 
               type="range"
-              max={this.state.isBuy ? this.bigMax : this.state.totalSupply}
+              max={this.state.isBuy ? (this.props.address ? this.state.walletBalance : this.bigMax) : (this.props.address ? this.state.tokenBalance : this.state.totalSupply)}
               value={this.state.amount}
               onChange={event => this.onChange(event, 'amount')} /> 
           </div>
@@ -110,12 +114,9 @@ class BondedToken extends React.Component {
             type="submit"
             onClick={event => this.submit()} />     
         </div>
-        <div>tokenBalanceWei:{this.state.tokenBalanceWei}</div>
-        <div>tokenBalance:{this.state.tokenBalance}</div>
-        <div>BalanceWei:{this.state.walletBalanceWei}</div>
-        <div>Balance:{this.state.walletBalance}</div>
-        <div>Account:{this.state.account}</div>
-        <div>Network:{this.state.network}</div>
+        <pre style={{'textAlign':'left'}}>
+        {JSON.stringify(this.state).split(',').join(',\n')}
+        </pre>
       </div>
     );
   }
@@ -136,12 +137,13 @@ class BondedToken extends React.Component {
       unlocked: false,
       account: null,
       network: null,
-      balance: 0,
+      balance: 4000000,
       balanceWei: 0,
       totalSupply: 1000000,
+      totalSupplyWei: 0,
       ratio: 0.2,
       isBuy: true,
-      amount: 500000,
+      amount: 0,
       readOnly: false
     };
   }
@@ -159,7 +161,10 @@ class BondedToken extends React.Component {
     this.setState({ network: this.relevantCoin.network})
   }
   toggleBuy () {
-    this.setState({ isBuy: !this.state.isBuy})
+    this.setState({ 
+      amount: 0,
+      isBuy: !this.state.isBuy
+    })
   }
   onChange (event, type) {
     let foo = {}
@@ -168,6 +173,11 @@ class BondedToken extends React.Component {
   }
   submit () {
     console.log('submit')
+    if (this.state.isBuy) {
+      this.relevantCoin.buy(this.state.amount, this.state.account)
+    } else {
+      this.relevantCoin.sell(this.state.amount, this.state.account)
+    }
   }
 
 
@@ -277,6 +287,7 @@ class BondedToken extends React.Component {
   check () {
     this.checkNetwork()
     .then(this.checkAccount.bind(this))
+    .then(this.checkEth.bind(this))
     .then(this.checkBalances.bind(this))
     .catch((error) => {
       console.error(error)
@@ -314,9 +325,10 @@ class BondedToken extends React.Component {
 
 
   checkBalances () {
-    return this.checkEth()
-    .then(this.checkToken.bind(this))
+    if (!this.props.address) return Promise.resolve()
+    return this.checkToken()
     .then(this.checkPool.bind(this))
+    .then(this.checkSupply.bind(this))
     .then(this.checkRatio.bind(this))
     .catch((error) => {
       console.log(error)
@@ -338,7 +350,7 @@ class BondedToken extends React.Component {
     return this.relevantCoin.balanceOf(this.state.account).then((balance) => {
       if (this.state.tokenBalance !== balance) {
         return this.relevantCoin.decimals().then((decimals) => {
-          decimals = Web3.utils.padRight('10', parseInt(decimals, 10) + 1);
+          decimals = Web3.utils.padRight('10', parseInt(decimals, 10));
           this.setState({
             tokenBalanceWei: balance,
             tokenBalance: new BigNumber(balance).div(decimals).toString()
@@ -350,11 +362,21 @@ class BondedToken extends React.Component {
   checkPool () {
     return this.relevantCoin.poolBalance().then((balance) => {
       if (this.state.balance !== balance) {
+        this.setState({
+          balanceWei: balance,
+          balance: Web3.utils.fromWei(balance)
+        })
+      }
+    })
+  }
+  checkSupply () {
+    return this.relevantCoin.totalSupply().then((totalSupply) => {
+      if (this.state.totalSupply !== totalSupply) {
         return this.relevantCoin.decimals().then((decimals) => {
-          decimals = Web3.utils.padRight('10', parseInt(decimals, 10) + 1);
+          decimals = Web3.utils.padRight('10', parseInt(decimals, 10));
           this.setState({
-            balanceWei: balance,
-            balance: new BigNumber(balance).div(decimals).toString()
+            totalSupplyWei: totalSupply,
+            totalSupply: new BigNumber(totalSupply).div(decimals).toString()
           })
         })
       }
