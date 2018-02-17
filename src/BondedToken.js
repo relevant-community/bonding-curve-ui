@@ -12,7 +12,9 @@ class BondedToken extends React.Component {
 
     return (
       <div className="--bondedToken">
-
+        {this.state.loading && (
+          <div>LOADING</div>
+        )}
         <div className="--bondedToken-flex">
           <Switch
           switchStyles={{width: 60}}
@@ -130,6 +132,7 @@ class BondedToken extends React.Component {
 
     this.bigMax = 100000000
     this.state = {
+      loading: false,
       walletBalance: null,
       walletBalanceWei: null,
       tokenBalance: null,
@@ -173,10 +176,39 @@ class BondedToken extends React.Component {
   }
   submit () {
     console.log('submit')
+    this.setState({loading: true})
     if (this.state.isBuy) {
       this.relevantCoin.buy(this.state.amount, this.state.account)
+      .on('transactionHash', (hash) => {
+        console.log('transactionHash', hash)
+        this.setState({loading: true})
+      })
+      .then((confirm) => {
+        console.log('confirm', confirm)
+        this.setState({loading: false})
+        return confirm
+      }).catch((err) => {
+        this.setState({loading: false})
+        console.error(err)
+      })
     } else {
-      this.relevantCoin.sell(this.state.amount, this.state.account)
+      return this.relevantCoin.decimals().then((decimals) => {
+        decimals = Web3.utils.padRight('10', parseInt(decimals, 10));
+        return this.relevantCoin.sell(new BigNumber(this.state.amount).times(decimals).toString(), this.state.account)
+        .on('transactionHash', (hash) => {
+          console.log('transactionHash', hash)
+          this.setState({loading: true})
+        })
+        .then((confirm) => {
+          console.log('confirm', confirm)
+          this.setState({loading: false})
+          return confirm
+        }).catch((err) => {
+          this.setState({loading: false})
+          console.error(err)
+        })
+      })
+      
     }
   }
 
