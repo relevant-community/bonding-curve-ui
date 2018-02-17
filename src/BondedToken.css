@@ -9,8 +9,10 @@
   display: block;
   border-bottom:1px solid grey;
 }
-.--bondedToken label:not(.--bondedToken-ratio) input[type="number"] {
+.--bondedToken label:not(.--bondedToken-ratio) input[type="number"],
+.--bondedToken label:not(.--bondedToken-ratio) > div {
   width:calc(100% - 100px);
+  display: inline;
 }
 .--bondedToken input[type="range"] {
   width:100%;
