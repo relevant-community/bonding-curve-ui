@@ -59,12 +59,6 @@
   display:inline;
 }
 
-.chart {
-  width: 100%;
-  height: 400px;
-}
-
-
 .--bondedTokenHeader {
   background-color: grey;
   border-bottom: 1px solid black;

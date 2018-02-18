@@ -2,24 +2,33 @@ import React from 'react';
 const Recharts = require('recharts');
 const {
   Area,
+  // Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  // Legend,
   ReferenceDot,
   ComposedChart
 } = Recharts;
 
 class CurveChart extends React.Component {
+  componentDidMount() {
+    this.forceUpdate();
+  }
+
   render () {
     if (!this.props.chartData) return;
     if (!this.props.documentReady) return;
     let { data, currentPrice } = this.props.chartData;
+    console.log(window.innerWidth);
+    let width = Math.min(600, window.innerWidth - 30);
+    let height = width * 2/3;
     return (
-      <div className='chart'>
+      <div>
         <ComposedChart
-          width={600}
-          height={400}
+          width={width}
+          height={height}
           data={data}
           margin={{top: 10, right: 30, left: 0, bottom: 0}}
         >
@@ -42,7 +51,6 @@ class CurveChart extends React.Component {
             fill="blue"
             stroke="none"
           />
-
 
         </ComposedChart>
       </div>

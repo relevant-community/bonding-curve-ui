@@ -15,13 +15,10 @@ class BondedToken extends React.Component {
   render() {
 
     return (
-
-
       <div className="--bondedToken">
         {this.state.loading && (
           <div>{this.state.loading}</div>
         )}
-
 
         {this.state.account && <BondedTokenHeader 
           account={this.state.account} 
@@ -79,8 +76,8 @@ class BondedToken extends React.Component {
 
     this.bigMax = 1000000
     this.state = {
-      address: this.props.address,
       advanced: false,
+      address: this.props.address || '',
       loading: false,
       walletBalance: 0,
       walletBalanceWei: 0,
@@ -106,6 +103,7 @@ class BondedToken extends React.Component {
   componentDidMount() {
     this.documentReady = true;
     this.getChartData(this.state);
+    this.forceUpdate();
   }
 
   componentWillUnmount () {
