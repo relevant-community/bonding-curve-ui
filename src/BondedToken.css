@@ -43,3 +43,8 @@
   content: ' Tokens';
   display:inline;
 }
+
+.chart {
+  width: 100%;
+  height: 400px;
+}

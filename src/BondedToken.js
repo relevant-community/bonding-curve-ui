@@ -3,6 +3,7 @@ import RelevantCoin from './relevant-contracts/dapp-module/RelevantCoin/index.js
 import './BondedToken.css';
 import Switch  from 'react-flexible-switch';
 import {Decimal} from 'decimal.js';
+import CurveChart from './Chart';
 var BigNumber = require('bignumber.js');
 const Web3 = require('web3')
 const ZeroClientProvider = require('web3-provider-engine/zero.js')
@@ -15,11 +16,12 @@ class BondedToken extends React.Component {
         {this.state.loading && (
           <div>LOADING</div>
         )}
+        {this.documentReady ? <CurveChart data={this.getDataPool()}/> : null}
         <div className="--bondedToken-flex">
           <Switch
           switchStyles={{width: 60}}
           value={this.isBuy}
-          circleStyles={{diameter: 16, onColor: 'grey', offColor: 'grey'}} 
+          circleStyles={{diameter: 16, onColor: 'grey', offColor: 'grey'}}
           labels={{on: 'Sell', off: 'Buy'}}
           onChange={event => this.toggleBuy()}
           />
@@ -37,12 +39,12 @@ class BondedToken extends React.Component {
                 onChange={event => this.onChange(event, 'balance')} />
             </label>
             {!this.props.address && (
-            <input 
+            <input
               type="range"
               value={this.state.balance}
               max={this.bigMax}
               onChange={event => this.onChange(event, 'balance')} /> )}
-           
+
           </div>
 
 
@@ -59,7 +61,7 @@ class BondedToken extends React.Component {
               onChange={event => this.onChange(event, 'ratio')} />
             </label>
             {!this.props.address && (
-            <input 
+            <input
               type="range"
               value={this.state.ratio}
               max="1"
@@ -78,13 +80,13 @@ class BondedToken extends React.Component {
                 onChange={event => this.onChange(event, 'totalSupply')} />
             </label>
             {!this.props.address && (
-            <input 
+            <input
               type="range"
               value={this.state.totalSupply}
-              max={this.bigMax} 
+              max={this.bigMax}
               onChange={event => this.onChange(event, 'totalSupply')} /> )}
           </div>
-          
+
         </div>
 
 
@@ -99,11 +101,11 @@ class BondedToken extends React.Component {
                 onChange={event => this.onChange(event, 'amount')} />
             </label>
             <br/>
-            <input 
+            <input
               type="range"
               max={this.state.isBuy ? (this.props.address ? this.state.walletBalance : this.bigMax) : (this.props.address ? this.state.tokenBalance : this.state.totalSupply)}
               value={this.state.amount}
-              onChange={event => this.onChange(event, 'amount')} /> 
+              onChange={event => this.onChange(event, 'amount')} />
           </div>
         </div>
         <div>
@@ -114,7 +116,7 @@ class BondedToken extends React.Component {
         <div>
           <input
             type="submit"
-            onClick={event => this.submit()} />     
+            onClick={event => this.submit()} />
         </div>
         <pre style={{'textAlign':'left'}}>
         {JSON.stringify(this.state).split(',').join(',\n')}
@@ -149,6 +151,14 @@ class BondedToken extends React.Component {
       amount: 0,
       readOnly: false
     };
+    this.getDataPool = this.getDataPool.bind(this);
+    this.documentReady = false;
+  }
+
+  componentDidMount() {
+    this.documentReady = true;
+    this.getDataPool();
+    this.forceUpdate();
   }
 
   componentWillUnmount () {
@@ -164,7 +174,7 @@ class BondedToken extends React.Component {
     this.setState({ network: this.relevantCoin.network})
   }
   toggleBuy () {
-    this.setState({ 
+    this.setState({
       amount: 0,
       isBuy: !this.state.isBuy
     })
@@ -208,19 +218,48 @@ class BondedToken extends React.Component {
           console.error(err)
         })
       })
-      
+
     }
   }
 
+  getDataPool () {
+    // if (this.data) return this.data;
+    let data = [];
+    let { totalSupply, ratio, balance } = this.state;
+    let step = 10000;
+    let currentPrice;
+    for(let i = step; i< totalSupply * 1.4; i += step) {
+      if( i < totalSupply) {
+        let eth = 1 * this.calculateSaleReturn({ ...this.state, amount: totalSupply - i });
+        let price = (balance - eth) / ( ratio * i );
+        data.push({ supply: i, sell: price, value: price});
+      } else if (i > totalSupply) {
+        if (!currentPrice) {
+          let price = balance / ( ratio * totalSupply );
+          // data.push({ supply: totalSupply, current: price });
+          data.push({ supply: totalSupply, buy: price, value: price });
+          data.push({ supply: totalSupply, sell: price, value: price });
+
+          currentPrice = { supply: totalSupply, buy: price, value: price };
+        }
+        let eth = 1 * this.calculateBuyPrice({ ...this.state, amount: i - totalSupply });
+        let price = (eth + balance) / ( ratio * ( i ));
+        data.push({ supply: i, buy: price, value: price  });
+      }
+    }
+    // this.data = data;
+    return data;
+  }
 
   // methods
 
-  calculateSaleReturn () {
-    if (!this.state.totalSupply || !this.state.balance || !this.state.ratio || !this.state.amount) return 'N/A'
-    let _supply = new BigNumber(this.state.totalSupply)
-    let _connectorBalance = new BigNumber(this.state.balance)
-    let _connectorWeight = new Decimal(this.state.ratio)
-    let _sellAmount = new BigNumber(this.state.amount)
+  calculateSaleReturn (props) {
+    let { totalSupply, balance, ratio, amount } = props || this.state;
+    if (!totalSupply || !balance || !ratio || !amount) return 'N/A'
+    let _supply = new BigNumber(totalSupply)
+    let _connectorBalance = new BigNumber(balance)
+    let _connectorWeight = new Decimal(ratio)
+    let _sellAmount = new BigNumber(amount)
     if (_supply.eq('0') || _connectorBalance.eq('0') || _connectorWeight.eq('0')) return 'N/A'
     if (_sellAmount.eq('0'))
       return '0';
@@ -246,11 +285,41 @@ class BondedToken extends React.Component {
       )
     ).toString(10)
   }
-  calculatePurchaseReturn() {
-    if (!this.state.totalSupply || !this.state.balance || !this.state.ratio || !this.state.amount) return 'N/A'
-    let _supply = new BigNumber(this.state.totalSupply)
-    let _connectorBalance = new BigNumber(this.state.balance)
-    let _connectorWeight = new Decimal(this.state.ratio)
+
+  calculateBuyPrice(props) {
+    let { totalSupply, balance, ratio, amount } = props || this.state;
+    if (!totalSupply || !balance || !ratio || !amount) return 'N/A'
+    let _supply = new BigNumber(totalSupply)
+    let _connectorBalance = new BigNumber(balance)
+    let _connectorWeight = new Decimal(ratio)
+    let _buyAmount = new BigNumber(amount)
+    if (_supply.eq('0') || _connectorBalance.eq('0') || _connectorWeight.eq('0')) return 'N/A'
+    if (_buyAmount.eq('0'))
+      return '0';
+
+    // Return = _connectorBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_connectorWeight / 1000000)))
+    let one = new BigNumber('1')
+
+    let foo = new Decimal(
+      one.plus(
+        _buyAmount.div(_supply)
+      ).toString()
+    )
+    BigNumber.config({ DECIMAL_PLACES: 4 });
+    return _connectorBalance.times(
+        foo.pow(
+          one.div(_connectorWeight).toString()
+        )
+        .minus(one.toString())
+    ).toString(10)
+  }
+
+  calculatePurchaseReturn(props) {
+    let { totalSupply, balance, ratio, amount } = props || this.state;
+    if (!totalSupply || !balance || !ratio || !amount) return 'N/A'
+    let _supply = new BigNumber(totalSupply)
+    let _connectorBalance = new BigNumber(balance)
+    let _connectorWeight = new Decimal(ratio)
     let _depositAmount = new BigNumber(this.state.amount)
     if (_supply.eq('0') || _connectorBalance.eq('0') || _connectorWeight.eq('0') || _depositAmount.eq('0')) return 'N/A'
 
@@ -269,12 +338,13 @@ class BondedToken extends React.Component {
     ).pow(_connectorWeight)
     BigNumber.config({ DECIMAL_PLACES: 4 });
 
-    return _supply.times( 
+    return _supply.times(
       (
         foo
-      ).minus('1') 
+      ).minus('1')
     ).toString(10)
   }
+
 
   // Web3
 
