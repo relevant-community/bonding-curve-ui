@@ -1,7 +1,9 @@
 import React from 'react';
 import RelevantCoin from './relevant-contracts/dapp-module/RelevantCoin/index.js'
 import './BondedToken.css';
-import Switch  from 'react-flexible-switch';
+import BondedTokenHeader  from './BondedTokenHeader';
+import BondedTokenTransact  from './BondedTokenTransact.js';
+import BondedTokenAdvanced  from './BondedTokenAdvanced.js';
 import {Decimal} from 'decimal.js';
 import CurveChart from './Chart';
 var BigNumber = require('bignumber.js');
@@ -12,141 +14,47 @@ class BondedToken extends React.Component {
   render() {
 
     return (
+
+
       <div className="--bondedToken">
         {this.state.loading && (
           <div>{this.state.loading}</div>
         )}
 
-        {this.props.address && (
-          <div className="--bondedToken-flex --bondedToken-mx-auto">
-            <div>
-              <h2>Personal Balance</h2>
-              <label className="--bondedToken-eth">
-                <div>{this.state.walletBalance}</div>
-              </label>
-            </div>
 
+        {this.state.account && <BondedTokenHeader 
+          account={this.state.account} 
+          walletBalance={this.state.walletBalance}
+          tokenBalance={this.state.tokenBalance}
+          />}
 
-            <div>
-              <h2>Personal Supply</h2>
-              <label className="--bondedToken-token">
-                <div>{this.state.tokenBalance}</div>
-              </label>
-            </div>
+        <BondedTokenTransact
+          submit={this.submit}
+          calculateSaleReturn={this.calculateSaleReturn}
+          calculatePurchaseReturn={this.calculatePurchaseReturn}
+          onChange={this.onChange}
+          amount={this.state.amount}
+          bigMax={this.bigMax}
+          totalSupply={this.state.totalSupply}
+          tokenBalance={this.state.tokenBalance}
+          walletBalance={this.state.walletBalance}
+          address={this.props.address}
+          toggleBuy={this.toggleBuy}
+          isBuy={this.state.isBuy} />
 
-          </div>
-        )}
+        <BondedTokenAdvanced 
+          bigMax={this.bigMax}
+          onChange={this.onChange}
+          balance={this.state.balance}
+          ratio={this.state.ratio}
+          totalSupply={this.state.totalSupply}
+          address={this.props.address}
+          advanced={this.state.advanced}
+          toggleAdvanced={this.toggleAdvanced} />
 
         {this.documentReady ? <CurveChart data={this.state.chartData}/> : null}
 
-        <div className="--bondedToken-flex --bondedToken-mx-auto">
-          <div>
-            <h2>Pool Balance</h2>
-            <label className="--bondedToken-eth">
-              <input
-                readOnly={!!this.props.address}
-                type="number"
-                value={this.state.balance}
-                max={this.bigMax}
-                onChange={event => this.onChange(event, 'balance')} />
-            </label>
-            {!this.props.address && (
-            <input
-              type="range"
-              value={this.state.balance}
-              max={this.bigMax}
-              onChange={event => this.onChange(event, 'balance')} /> )}
-
-          </div>
-
-
-          <div>
-            <h2>Ratio</h2>
-            <label className="--bondedToken-ratio">
-            <input
-              readOnly={!!this.props.address}
-              type="number"
-              step="0.01"
-              max="1"
-              min="0"
-              value={this.state.ratio}
-              onChange={event => this.onChange(event, 'ratio')} />
-            </label>
-            {!this.props.address && (
-            <input
-              type="range"
-              value={this.state.ratio}
-              max="1"
-              step="0.01"
-              onChange={event => this.onChange(event, 'ratio')} /> )}
-          </div>
-
-
-          <div>
-            <h2>Total Supply</h2>
-            <label className="--bondedToken-token">
-              <input
-                readOnly={!!this.props.address}
-                type="number"
-                value={this.state.totalSupply}
-                max={this.bigMax}
-                onChange={event => this.onChange(event, 'totalSupply')} />
-            </label>
-            {!this.props.address && (
-            <input
-              type="range"
-              value={this.state.totalSupply}
-              max={this.bigMax}
-              onChange={event => this.onChange(event, 'totalSupply')} /> )}
-          </div>
-
-        </div>
-
-
-
-        <div className="--bondedToken-flex">
-          <div>
-            <h2>Amount</h2>
-            <label className={this.state.isBuy ? "--bondedToken-eth" : "--bondedToken-token"}>
-              <input
-                type="number"
-                max={this.state.isBuy ? (this.props.address ? this.state.walletBalance : this.bigMax) : (this.props.address ? this.state.tokenBalance : this.state.totalSupply)}
-                value={this.state.amount}
-                onChange={event => this.onChange(event, 'amount')} />
-            </label>
-            <br/>
-            <input
-              type="range"
-              max={this.state.isBuy ? (this.props.address ? this.state.walletBalance : this.bigMax) : (this.props.address ? this.state.tokenBalance : this.state.totalSupply)}
-              value={this.state.amount}
-              onChange={event => this.onChange(event, 'amount')} />
-          </div>
-        </div>
-        <div>
-          <label className={this.state.isBuy ? "--bondedToken-token" : "--bondedToken-eth"}>
-            <div>
-              {this.state.isBuy ? this.calculatePurchaseReturn() : this.calculateSaleReturn()}
-            </div>
-          </label>
-        </div>
-        <div className="--bondedToken-flex">
-          <Switch
-          switchStyles={{width: 60}}
-          value={this.isBuy}
-          circleStyles={{diameter: 16, onColor: 'grey', offColor: 'grey'}}
-          labels={{on: 'Sell', off: 'Buy'}}
-          onChange={event => this.toggleBuy()}
-          />
-        </div>
-
-        {this.props.address && (
-          <div>
-            <input
-              type="submit"
-              onClick={event => this.submit()} />
-          </div>
-        )}
-{/*        <pre style={{'textAlign':'left'}}>
+  {/*      <pre style={{'textAlign':'left'}}>
         {JSON.stringify(this.state).split(',').join(',\n')}
         </pre>*/}
       </div>
@@ -159,9 +67,16 @@ class BondedToken extends React.Component {
     this.initWeb3().catch((error) => {
       console.log(error)
     })
+    this.toggleAdvanced = this.toggleAdvanced.bind(this)
+    this.toggleBuy = this.toggleBuy.bind(this)
+    this.submit = this.submit.bind(this)
+    this.onChange = this.onChange.bind(this)
+    this.calculateSaleReturn = this.calculateSaleReturn.bind(this)
+    this.calculatePurchaseReturn = this.calculatePurchaseReturn.bind(this)
 
-    this.bigMax = 100000000
+    this.bigMax = 1000000
     this.state = {
+      advanced: false,
       loading: false,
       walletBalance: 0,
       walletBalanceWei: 0,
@@ -207,6 +122,11 @@ class BondedToken extends React.Component {
     this.setState({
       amount: 0,
       isBuy: !this.state.isBuy
+    })
+  }
+  toggleAdvanced () {
+    this.setState({ 
+      advanced: !this.state.advanced
     })
   }
   onChange (event, type) {
