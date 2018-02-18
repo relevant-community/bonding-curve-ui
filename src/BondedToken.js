@@ -14,22 +14,34 @@ class BondedToken extends React.Component {
     return (
       <div className="--bondedToken">
         {this.state.loading && (
-          <div>LOADING</div>
+          <div>{this.state.loading}</div>
         )}
+
+        {this.props.address && (
+          <div className="--bondedToken-flex --bondedToken-mx-auto">
+            <div>
+              <h2>Personal Balance</h2>
+              <label className="--bondedToken-eth">
+                <div>{this.state.walletBalance}</div>
+              </label>
+            </div>
+
+
+            <div>
+              <h2>Personal Supply</h2>
+              <label className="--bondedToken-token">
+                <div>{this.state.tokenBalance}</div>
+              </label>
+            </div>
+
+          </div>
+        )}
+
         {this.documentReady ? <CurveChart data={this.getDataPool()}/> : null}
-        <div className="--bondedToken-flex">
-          <Switch
-          switchStyles={{width: 60}}
-          value={this.isBuy}
-          circleStyles={{diameter: 16, onColor: 'grey', offColor: 'grey'}}
-          labels={{on: 'Sell', off: 'Buy'}}
-          onChange={event => this.toggleBuy()}
-          />
-        </div>
 
         <div className="--bondedToken-flex --bondedToken-mx-auto">
           <div>
-            <h2>Balance</h2>
+            <h2>Pool Balance</h2>
             <label className="--bondedToken-eth">
               <input
                 readOnly={!!this.props.address}
@@ -69,6 +81,7 @@ class BondedToken extends React.Component {
               onChange={event => this.onChange(event, 'ratio')} /> )}
           </div>
 
+
           <div>
             <h2>Total Supply</h2>
             <label className="--bondedToken-token">
@@ -88,6 +101,7 @@ class BondedToken extends React.Component {
           </div>
 
         </div>
+
 
 
         <div className="--bondedToken-flex">
@@ -110,17 +124,31 @@ class BondedToken extends React.Component {
         </div>
         <div>
           <label className={this.state.isBuy ? "--bondedToken-token" : "--bondedToken-eth"}>
-            {this.state.isBuy ? this.calculatePurchaseReturn() : this.calculateSaleReturn()}
+            <div>
+              {this.state.isBuy ? this.calculatePurchaseReturn() : this.calculateSaleReturn()}
+            </div>
           </label>
         </div>
-        <div>
-          <input
-            type="submit"
-            onClick={event => this.submit()} />
+        <div className="--bondedToken-flex">
+          <Switch
+          switchStyles={{width: 60}}
+          value={this.isBuy}
+          circleStyles={{diameter: 16, onColor: 'grey', offColor: 'grey'}}
+          labels={{on: 'Sell', off: 'Buy'}}
+          onChange={event => this.toggleBuy()}
+          />
         </div>
-        <pre style={{'textAlign':'left'}}>
+
+        {this.props.address && (
+          <div>
+            <input
+              type="submit"
+              onClick={event => this.submit()} />
+          </div>
+        )}
+{/*        <pre style={{'textAlign':'left'}}>
         {JSON.stringify(this.state).split(',').join(',\n')}
-        </pre>
+        </pre>*/}
       </div>
     );
   }
@@ -135,10 +163,10 @@ class BondedToken extends React.Component {
     this.bigMax = 100000000
     this.state = {
       loading: false,
-      walletBalance: null,
-      walletBalanceWei: null,
-      tokenBalance: null,
-      tokenBalanceWei: null,
+      walletBalance: 0,
+      walletBalanceWei: 0,
+      tokenBalance: 0,
+      tokenBalanceWei: 0,
       unlocked: false,
       account: null,
       network: null,
@@ -174,28 +202,38 @@ class BondedToken extends React.Component {
     this.setState({ network: this.relevantCoin.network})
   }
   toggleBuy () {
+    if (this.state.loading) return
     this.setState({
       amount: 0,
       isBuy: !this.state.isBuy
     })
   }
   onChange (event, type) {
+    if (this.state.loading) return
     let foo = {}
     foo[type] = event.target.value
     this.setState(foo)
   }
   submit () {
+    if (this.state.amount <= 0 || this.state.loading) return
     console.log('submit')
-    this.setState({loading: true})
+    this.setState({loading: 'Please Review & Sign Transaction'})
     if (this.state.isBuy) {
       this.relevantCoin.buy(this.state.amount, this.state.account)
       .on('transactionHash', (hash) => {
         console.log('transactionHash', hash)
-        this.setState({loading: true})
+        this.setState({loading: 'Transaction is waiting for confirmation'})
       })
       .then((confirm) => {
         console.log('confirm', confirm)
-        this.setState({loading: false})
+        this.setState({
+          amount: 0,
+          loading: 'Transaction confirmed'
+        })
+        this.check()
+        setTimeout(() => {
+          this.setState({loading: false})
+        }, 1000)
         return confirm
       }).catch((err) => {
         this.setState({loading: false})
@@ -207,11 +245,18 @@ class BondedToken extends React.Component {
         return this.relevantCoin.sell(new BigNumber(this.state.amount).times(decimals).toString(), this.state.account)
         .on('transactionHash', (hash) => {
           console.log('transactionHash', hash)
-          this.setState({loading: true})
+          this.setState({loading: 'Transaction is waiting for confirmation'})
         })
         .then((confirm) => {
           console.log('confirm', confirm)
-          this.setState({loading: false})
+          this.setState({
+            amount: 0,
+            loading: 'Transaction confirmed'
+          })
+          this.check()
+          setTimeout(() => {
+            this.setState({loading: false})
+          }, 1000)
           return confirm
         }).catch((err) => {
           this.setState({loading: false})
@@ -441,9 +486,10 @@ class BondedToken extends React.Component {
     return global.web3.eth.getBalance(this.state.account, (error, balance) => {
       if (error) throw new Error(error)
       if (this.state.ethBalanceWei !== balance) {
+        BigNumber.config({ DECIMAL_PLACES: 4 });
         this.setState({
           walletBalanceWei: balance,
-          walletBalance: Web3.utils.fromWei(balance)
+          walletBalance: new BigNumber(Web3.utils.fromWei(balance)).toString(10)
         })
       }
     })
@@ -453,9 +499,10 @@ class BondedToken extends React.Component {
       if (this.state.tokenBalance !== balance) {
         return this.relevantCoin.decimals().then((decimals) => {
           decimals = Web3.utils.padRight('10', parseInt(decimals, 10));
+          BigNumber.config({ DECIMAL_PLACES: 4 });
           this.setState({
             tokenBalanceWei: balance,
-            tokenBalance: new BigNumber(balance).div(decimals).toString()
+            tokenBalance: new BigNumber(balance).div(decimals).toString(10)
           })
         })
       }
@@ -464,9 +511,10 @@ class BondedToken extends React.Component {
   checkPool () {
     return this.relevantCoin.poolBalance().then((balance) => {
       if (this.state.balance !== balance) {
+        BigNumber.config({ DECIMAL_PLACES: 4 });
         this.setState({
           balanceWei: balance,
-          balance: Web3.utils.fromWei(balance)
+          balance: new BigNumber(Web3.utils.fromWei(balance)).toString(10)
         })
       }
     })
