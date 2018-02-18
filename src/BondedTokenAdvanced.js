@@ -19,6 +19,18 @@ class BondedTokenAdvanced extends React.Component {
         <div className=" --BondedTokenAdvanced-open">
 
           <div className="--bondedToken-flex --bondedTokenTransact">
+            <div>Token Address</div>
+            <div>
+              <label className="">
+                <input
+                  type="text"
+                  value={this.props.address}
+                  onChange={event => this.props.onChange(event, 'address')} />
+              </label>
+            </div>
+          </div>  
+
+          <div className="--bondedToken-flex --bondedTokenTransact">
             <div>Pool Balance</div>
             <div>
               <label className="--bondedToken-eth">

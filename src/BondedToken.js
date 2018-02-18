@@ -38,21 +38,21 @@ class BondedToken extends React.Component {
           totalSupply={this.state.totalSupply}
           tokenBalance={this.state.tokenBalance}
           walletBalance={this.state.walletBalance}
-          address={this.props.address}
+          address={this.state.address}
           toggleBuy={this.toggleBuy}
           isBuy={this.state.isBuy} />
 
         <BondedTokenAdvanced 
+          getDataPool={this.getDataPool}
           bigMax={this.bigMax}
           onChange={this.onChange}
           balance={this.state.balance}
           ratio={this.state.ratio}
           totalSupply={this.state.totalSupply}
-          address={this.props.address}
+          address={this.state.address}
           advanced={this.state.advanced}
           toggleAdvanced={this.toggleAdvanced} />
 
-        {this.documentReady ? <CurveChart data={this.getDataPool()}/> : null}
 
   {/*      <pre style={{'textAlign':'left'}}>
         {JSON.stringify(this.state).split(',').join(',\n')}
@@ -63,7 +63,9 @@ class BondedToken extends React.Component {
 
   constructor(props) {
     super(props);
-    this.relevantCoin = new RelevantCoin({address: props.address})
+    if (props.address) {
+      this.relevantCoin = new RelevantCoin({address: props.address})
+    }
     this.initWeb3().catch((error) => {
       console.log(error)
     })
@@ -76,6 +78,7 @@ class BondedToken extends React.Component {
 
     this.bigMax = 1000000
     this.state = {
+      address: this.props.address,
       advanced: false,
       loading: false,
       walletBalance: 0,
@@ -110,12 +113,6 @@ class BondedToken extends React.Component {
 
   // events
 
-  accountChange () {
-    this.setState({ account: this.relevantCoin.account})
-  }
-  networkChange () {
-    this.setState({ network: this.relevantCoin.network})
-  }
   toggleBuy () {
     if (this.state.loading) return
     this.setState({
@@ -392,7 +389,7 @@ class BondedToken extends React.Component {
 
 
   checkBalances () {
-    if (!this.props.address) return Promise.resolve()
+    if (!this.state.address) return Promise.resolve()
     return this.checkToken()
     .then(this.checkPool.bind(this))
     .then(this.checkSupply.bind(this))
