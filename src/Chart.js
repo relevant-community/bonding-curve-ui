@@ -17,11 +17,11 @@ class CurveChart extends React.Component {
           margin={{top: 10, right: 30, left: 0, bottom: 0}}
         >
           <CartesianGrid strokeDasharray="3 3"/>
-          <XAxis dataKey="supply" type="supply" allowDuplicatedCategory={false} />
+          <XAxis dataKey="supply" />
           <YAxis/>
           <Tooltip/>
 
-          <Area dataKey="value" data={data} name={'curve'} key={'curve'} stackId="1" stroke='blue' fill='white'/>
+          <Area dataKey="value"  name={'curve'} key={'curve'} stackId="1" stroke='blue' fill='white'/>
         </AreaChart>
       </div>
     )

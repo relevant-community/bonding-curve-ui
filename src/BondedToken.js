@@ -37,7 +37,7 @@ class BondedToken extends React.Component {
           </div>
         )}
 
-        {this.documentReady ? <CurveChart data={this.getDataPool()}/> : null}
+        {this.documentReady ? <CurveChart data={this.state.chartData}/> : null}
 
         <div className="--bondedToken-flex --bondedToken-mx-auto">
           <div>
@@ -177,7 +177,8 @@ class BondedToken extends React.Component {
       ratio: 0.2,
       isBuy: true,
       amount: 0,
-      readOnly: false
+      readOnly: false,
+      chartData: null,
     };
     this.getDataPool = this.getDataPool.bind(this);
     this.documentReady = false;
@@ -212,7 +213,9 @@ class BondedToken extends React.Component {
     if (this.state.loading) return
     let foo = {}
     foo[type] = event.target.value
-    this.setState(foo)
+    this.setState(foo);
+    this.getDataPool();
+
   }
   submit () {
     if (this.state.amount <= 0 || this.state.loading) return
@@ -271,28 +274,31 @@ class BondedToken extends React.Component {
     // if (this.data) return this.data;
     let data = [];
     let { totalSupply, ratio, balance } = this.state;
-    let step = 10000;
+    let step = Math.round(totalSupply / 100);
     let currentPrice;
-    for(let i = step; i< totalSupply * 1.4; i += step) {
+    for(let i = step; i< totalSupply * 1.5; i += step) {
       if( i < totalSupply) {
         let eth = 1 * this.calculateSaleReturn({ ...this.state, amount: totalSupply - i });
         let price = (balance - eth) / ( ratio * i );
         data.push({ supply: i, sell: price, value: price});
       } else if (i > totalSupply) {
         if (!currentPrice) {
-          let price = balance / ( ratio * totalSupply );
+          // let price = balance / ( ratio * totalSupply );
           // data.push({ supply: totalSupply, current: price });
-          data.push({ supply: totalSupply, buy: price, value: price });
-          data.push({ supply: totalSupply, sell: price, value: price });
-
-          currentPrice = { supply: totalSupply, buy: price, value: price };
+          // data.push({ supply: totalSupply, buy: price, value: price });
+          // data.push({ supply: totalSupply, sell: price, value: price });
+          // currentPrice = true;
         }
         let eth = 1 * this.calculateBuyPrice({ ...this.state, amount: i - totalSupply });
-        let price = (eth + balance) / ( ratio * ( i ));
-        data.push({ supply: i, buy: price, value: price  });
+        console.log('eth ', eth);
+
+        let price = (eth + balance) / ( ratio * i );
+        console.log('price ', price);
+
+        data.push({ supply: 1 * i, buy: price, value: 1 * price });
       }
     }
-    // this.data = data;
+    this.setState({ chartData: data })
     return data;
   }
 
@@ -320,7 +326,7 @@ class BondedToken extends React.Component {
       one.minus(
         _sellAmount.div(_supply)
       ).toString()
-    )
+    );
     BigNumber.config({ DECIMAL_PLACES: 4 });
     return _connectorBalance.times(
       one.minus(
@@ -343,13 +349,13 @@ class BondedToken extends React.Component {
       return '0';
 
     // Return = _connectorBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_connectorWeight / 1000000)))
-    let one = new BigNumber('1')
+    let one = new BigNumber('1');
 
     let foo = new Decimal(
       one.plus(
         _buyAmount.div(_supply)
       ).toString()
-    )
+    );
     BigNumber.config({ DECIMAL_PLACES: 4 });
     return _connectorBalance.times(
         foo.pow(
