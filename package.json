@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "bignumber.js": "^6.0.0",
+    "bonded-token": "0.0.2",
     "decimal.js": "^9.0.1",
     "lib-blockies": "github:eth-button/lib-blockies",
     "microevent": "^1.0.0",
