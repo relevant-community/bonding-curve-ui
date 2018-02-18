@@ -103,16 +103,14 @@ class BondedToken extends React.Component {
   }
 
   componentDidMount() {
-    console.log('init start')
     this.relevantCoin = new RelevantCoin()
     this.initWeb3().catch((error) => {
       console.log(error)
-    }).then(() => {
-      console.log('init done?')
-      this.documentReady = true;
-      this.getChartData(this.state);
-      this.forceUpdate();
     })
+
+    this.documentReady = true;
+    this.getChartData(this.state);
+    this.forceUpdate();
 
   }
 
@@ -143,9 +141,9 @@ class BondedToken extends React.Component {
   }
   onChange (event, type) {
     if (type === 'address') {
-      if (!utils.isAddress(event.target.value)) {
+      if (event.target.value && !utils.isAddress(event.target.value)) {
         return
-      } else {
+      } else if(event.target.value) {
         this.relevantCoin.deployContract(event.target.value)
       }
     }
@@ -353,7 +351,6 @@ class BondedToken extends React.Component {
   }
 
   check () {
-
     return this.checkNetwork()
     .then(this.checkAccount.bind(this))
     .then(this.checkEth.bind(this))
@@ -365,21 +362,16 @@ class BondedToken extends React.Component {
   }
 
   checkNetwork () {
-    return new Promise((resolve, reject) => {
-      global.web3.eth.net.getId((err, netId) => {
-        if (err) reject(err)
+      return global.web3.eth.net.getId((err, netId) => {
+        if (err) console.log(err)
         if (!err && this.state.network !== netId && this.relevantCoin) {
-          console.log(this.addresses)
-          let address = this.addresses[netId]
-          console.log('address', address)
+          let address = this.props.relevant ? this.addresses[netId] : null
           this.setState({ 
             address,
             network: netId
           })
-          this.relevantCoin.deployContract(address)
-          resolve()
+          address && this.relevantCoin.deployContract(address)
         }
-      })
     })
   }
 
@@ -427,7 +419,6 @@ class BondedToken extends React.Component {
     })
   }
   checkToken () {
-    console.log('checkToken')
     return this.relevantCoin.balanceOf(this.state.account).then((balance) => {
       if (this.state.tokenBalanceWei !== balance) {
         return this.relevantCoin.decimals().then((decimals) => {
