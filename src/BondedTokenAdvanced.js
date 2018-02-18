@@ -28,7 +28,7 @@ class BondedTokenAdvanced extends React.Component {
                   onChange={event => this.props.onChange(event, 'address')} />
               </label>
             </div>
-          </div>  
+          </div>
 
           <div className="--bondedToken-flex --bondedTokenTransact">
             <div>Pool Balance</div>
