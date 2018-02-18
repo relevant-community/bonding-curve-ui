@@ -8,6 +8,7 @@ import {Decimal} from 'decimal.js';
 import CurveChart from './Chart';
 var BigNumber = require('bignumber.js');
 const Web3 = require('web3')
+const utils = require('web3-utils')
 const ZeroClientProvider = require('web3-provider-engine/zero.js')
 
 class BondedToken extends React.Component {
@@ -136,7 +137,8 @@ class BondedToken extends React.Component {
     if (this.state.loading) return
     let foo = {}
     foo[type] = event.target.value
-    this.setState(foo);
+    foo[type + 'Wei'] = '0'
+    this.setState(foo)
   }
   submit () {
     if (this.state.amount <= 0 || this.state.loading) return
@@ -165,7 +167,7 @@ class BondedToken extends React.Component {
       })
     } else {
       return this.relevantCoin.decimals().then((decimals) => {
-        decimals = Web3.utils.padRight('10', parseInt(decimals, 10));
+        decimals = utils.padRight('10', parseInt(decimals, 10));
         return this.relevantCoin.sell(new BigNumber(this.state.amount).times(decimals).toString(), this.state.account)
         .on('transactionHash', (hash) => {
           console.log('transactionHash', hash)
@@ -403,20 +405,20 @@ class BondedToken extends React.Component {
   checkEth () {
     return global.web3.eth.getBalance(this.state.account, (error, balance) => {
       if (error) throw new Error(error)
-      if (this.state.ethBalanceWei !== balance) {
+      if (this.state.walletBalanceWei !== balance) {
         BigNumber.config({ DECIMAL_PLACES: 4 });
         this.setState({
           walletBalanceWei: balance,
-          walletBalance: new BigNumber(Web3.utils.fromWei(balance)).toString(10)
+          walletBalance: new BigNumber(utils.fromWei(balance)).toString(10)
         })
       }
     })
   }
   checkToken () {
     return this.relevantCoin.balanceOf(this.state.account).then((balance) => {
-      if (this.state.tokenBalance !== balance) {
+      if (this.state.tokenBalanceWei !== balance) {
         return this.relevantCoin.decimals().then((decimals) => {
-          decimals = Web3.utils.padRight('10', parseInt(decimals, 10));
+          decimals = utils.padRight('10', parseInt(decimals, 10));
           BigNumber.config({ DECIMAL_PLACES: 4 });
           this.setState({
             tokenBalanceWei: balance,
@@ -428,20 +430,20 @@ class BondedToken extends React.Component {
   }
   checkPool () {
     return this.relevantCoin.poolBalance().then((balance) => {
-      if (this.state.balance !== balance) {
+      if (this.state.balanceWei !== balance) {
         BigNumber.config({ DECIMAL_PLACES: 4 });
         this.setState({
           balanceWei: balance,
-          balance: new BigNumber(Web3.utils.fromWei(balance)).toString(10)
+          balance: new BigNumber(utils.fromWei(balance)).toString(10)
         })
       }
     })
   }
   checkSupply () {
     return this.relevantCoin.totalSupply().then((totalSupply) => {
-      if (this.state.totalSupply !== totalSupply) {
+      if (this.state.totalSupplyWei !== totalSupply) {
         return this.relevantCoin.decimals().then((decimals) => {
-          decimals = Web3.utils.padRight('10', parseInt(decimals, 10));
+          decimals = utils.padRight('10', parseInt(decimals, 10));
           this.setState({
             totalSupplyWei: totalSupply,
             totalSupply: new BigNumber(totalSupply).div(decimals).toString()
