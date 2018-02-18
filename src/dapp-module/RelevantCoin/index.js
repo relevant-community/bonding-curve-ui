@@ -1,5 +1,5 @@
 
-const RelevantCoinArtifacts = require('../../build/contracts/RelevantCoin.json')
+const RelevantCoinArtifacts = require('../../contracts/RelevantCoin.json')
 
 const Web3 = require('web3')
 const BN = require('bignumber.js')

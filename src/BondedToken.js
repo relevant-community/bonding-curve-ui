@@ -1,5 +1,5 @@
 import React from 'react';
-import RelevantCoin from './relevant-contracts/dapp-module/RelevantCoin/index.js'
+import RelevantCoin from './dapp-module/RelevantCoin/index.js'
 import './BondedToken.css';
 import BondedTokenHeader  from './BondedTokenHeader';
 import BondedTokenTransact  from './BondedTokenTransact.js';
