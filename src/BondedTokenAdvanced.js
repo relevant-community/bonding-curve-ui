@@ -9,7 +9,7 @@ class BondedTokenAdvanced extends React.Component {
       <div className=" --BondedTokenAdvanced">
         <div className=" --bondedToken-flex-center">
           <Switch
-          switchStyles={{width: 110}}
+          switchStyles={{width: 110, color: 'grey'}}
           value={this.props.advanced}
           circleStyles={{diameter: 16, onColor: 'grey', offColor: 'lightgrey'}} 
           labels={{on: 'Advanced', off: 'Advanced'}}

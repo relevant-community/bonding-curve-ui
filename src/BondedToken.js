@@ -76,8 +76,8 @@ class BondedToken extends React.Component {
 
     this.bigMax = 1000000
     this.state = {
-      advanced: false,
-      address: this.props.address || '',
+      advanced: !this.props.address,
+      address: this.props.address || undefined,
       loading: false,
       walletBalance: 0,
       walletBalanceWei: 0,
@@ -132,6 +132,13 @@ class BondedToken extends React.Component {
     })
   }
   onChange (event, type) {
+    if (type === 'address') {
+      if (!utils.isAddress(event.target.value)) {
+        return
+      } else {
+        this.relevantCoin = new RelevantCoin({ address: event.target.value })
+      }
+    }
     if (this.state.loading) return
     let foo = {}
     foo[type] = event.target ? event.target.value : event
@@ -238,7 +245,8 @@ class BondedToken extends React.Component {
     // console.log(Math.pow((1 - (_sellAmount / _supply)) , (1 / _connectorWeight)))
 
     // Return = _connectorBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_connectorWeight / 1000000)))
-    return _connectorBalance * (1 - Math.pow((1 - (_sellAmount / _supply)) , (1 / _connectorWeight)))
+    let foo = _connectorBalance * (1 - Math.pow((1 - (_sellAmount / _supply)) , (1 / _connectorWeight)))
+    return Math.round(foo * 10000) / 10000
 
   }
 
@@ -252,7 +260,8 @@ class BondedToken extends React.Component {
     if (_supply === 0 || _connectorBalance === 0 || _connectorWeight === 0) return '0'
     if (_buyAmount === 0)
       return '0';
-    return _connectorBalance * (Math.pow((1 + (_buyAmount / _supply)), (1 / _connectorWeight)) - 1)
+    let foo = _connectorBalance * (Math.pow((1 + (_buyAmount / _supply)), (1 / _connectorWeight)) - 1)
+    return Math.round(foo * 10000) / 10000
   }
 
   // calculatePurchaseReturn
@@ -272,8 +281,8 @@ class BondedToken extends React.Component {
 
     // console.log(Math.pow((1 + _depositAmount / _connectorBalance) , (_connectorWeight)))
     //Return = _supply * ((1 + _depositAmount / _connectorBalance) ^ (_connectorWeight / 1000000) - 1)
-    return _supply * (Math.pow((1 + _depositAmount / _connectorBalance) , (_connectorWeight)) - 1)
-
+    let foo = _supply * (Math.pow((1 + _depositAmount / _connectorBalance) , (_connectorWeight)) - 1)
+    return Math.round(foo * 10000) / 10000
     // let goo = _depositAmount
     //   .div(_connectorBalance)
     //   .plus('1')
