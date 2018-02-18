@@ -80,7 +80,7 @@ class BondedToken extends React.Component {
     this.bigMax = 1000000
     this.state = {
       address: this.props.address,
-      advanced: true,
+      advanced: false,
       loading: false,
       walletBalance: 0,
       walletBalanceWei: 0,
@@ -115,7 +115,7 @@ class BondedToken extends React.Component {
   componentWillUpdate(newProps, newState) {
     let { totalSupply, ratio, balance } = this.state;
     let { totalSupplyN, ratioN, balanceN } = newState;
-    if ( totalSupply != totalSupplyN || ratio !== ratioN || balance !== balanceN) {
+    if ( totalSupply !== totalSupplyN || ratio !== ratioN || balance !== balanceN) {
       this.getChartData(newState);
     }
   }
@@ -136,9 +136,10 @@ class BondedToken extends React.Component {
   onChange (event, type) {
     if (this.state.loading) return
     let foo = {}
-    foo[type] = event.target.value
+    foo[type] = event.target ? event.target.value : event
     foo[type + 'Wei'] = '0'
     this.setState(foo)
+
   }
   submit () {
     if (this.state.amount <= 0 || this.state.loading) return
@@ -254,9 +255,6 @@ class BondedToken extends React.Component {
     if (_buyAmount === 0)
       return '0';
     return _connectorBalance * (Math.pow((1 + (_buyAmount / _supply)), (1 / _connectorWeight)) - 1)
-
-    let foo = 1 + (_buyAmount / _supply)
-    return _connectorBalance * (Math.pow(foo, (1 / _connectorWeight)) - 1)
   }
 
   // calculatePurchaseReturn

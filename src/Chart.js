@@ -1,22 +1,14 @@
 import React from 'react';
 const Recharts = require('recharts');
 const {
-  AreaChart,
   Area,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ReferenceDot,
-  ScatterChart,
   ComposedChart
 } = Recharts;
-
-
-console.log(Recharts)
 
 class CurveChart extends React.Component {
   render () {
