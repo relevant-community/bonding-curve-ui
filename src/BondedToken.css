@@ -101,8 +101,8 @@
 .--bondedToken-submit {
   box-sizing: border-box;
   width:100%;
-  border:1px solid grey;
-  background-color: grey;
+  border:1px solid #4600FF;
+  background-color: #4600FF;
   color: white;
   text-transform: uppercase;
   font-weight: bold;
