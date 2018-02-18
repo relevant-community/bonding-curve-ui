@@ -9,7 +9,7 @@ import BondedTokenAdvanced  from './BondedTokenAdvanced.js';
 var BigNumber = require('bignumber.js');
 const Web3 = require('web3')
 const utils = require('web3-utils')
-const ZeroClientProvider = require('web3-provider-engine/zero.js')
+// const ZeroClientProvider = require('web3-provider-engine/zero.js')
 
 class BondedToken extends React.Component {
   render() {
@@ -305,11 +305,11 @@ class BondedToken extends React.Component {
         web3Provider = global.web3.currentProvider
         // attempt to try again if no web3Provider
       } else {
-        this.setState({ readOnly: true})
-        web3Provider = ZeroClientProvider({
-          getAccounts: function(){},
-          rpcUrl: 'https://rinkeby.infura.io'
-        })
+        // this.setState({ readOnly: true})
+        // web3Provider = ZeroClientProvider({
+        //   getAccounts: function(){},
+        //   rpcUrl: 'https://rinkeby.infura.io'
+        // })
       }
 
       if (web3Provider) {
