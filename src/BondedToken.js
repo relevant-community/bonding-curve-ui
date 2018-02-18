@@ -80,7 +80,7 @@ class BondedToken extends React.Component {
     this.bigMax = 1000000
     this.state = {
       address: this.props.address,
-      advanced: false,
+      advanced: true,
       loading: false,
       walletBalance: 0,
       walletBalanceWei: 0,
