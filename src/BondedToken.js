@@ -24,6 +24,7 @@ class BondedToken extends React.Component {
           account={this.state.account} 
           walletBalance={this.state.walletBalance}
           tokenBalance={this.state.tokenBalance}
+          onChange={this.onChange}
           />}
 
         <BondedTokenTransact

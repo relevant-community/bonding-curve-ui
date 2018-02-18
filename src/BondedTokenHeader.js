@@ -8,12 +8,18 @@ class BondedTokenHeader extends React.Component {
     return (
       <div className="--bondedTokenHeader">
 {/*       <img alt="blockie" src={this.state.url} />*/}
-        <div className="--bondedTokenAddress">{this.props.account}</div>
+        <div className="--bondedTokenAddress">
+          <a 
+          target="_blank"
+          href={"https://etherscan.io/address/" + this.props.account}>
+          {this.props.account}
+          </a>
+        </div>
         <div className="--bondedToken-flex">
-          <div>
+          <div className="--bondedToken-pointer" onClick={event => this.props.onChange({target:{value:this.props.walletBalance}}, 'amount') }>
             {this.props.walletBalance} ETH
           </div>
-          <div>
+          <div className="--bondedToken-pointer" onClick={event => this.props.onChange({target:{value:this.props.tokenBalance}}, 'amount') }>
             {this.props.tokenBalance} Tokens
           </div>
         </div>

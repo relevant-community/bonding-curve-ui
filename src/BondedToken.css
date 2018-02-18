@@ -4,6 +4,13 @@
   line-height:1.2em;
   border: 1px solid black;
 }
+.--bondedToken a,
+.--bondedToken a:active,
+.--bondedToken a:visited,
+.--bondedToken a:hover {
+  color: lightgrey;
+  text-decoration: none;
+}
 .--bondedToken .--bondedToken-pointer {
   cursor: pointer;
 }
