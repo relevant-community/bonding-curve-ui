@@ -23,6 +23,7 @@
 .--bondedToken input[type="range"] {
   width:100%;
 }
+.--bondedToken input[type="text"],
 .--bondedToken input[type="number"] {
   display: inline;
   border: none;

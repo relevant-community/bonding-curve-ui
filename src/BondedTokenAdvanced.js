@@ -1,4 +1,5 @@
 import Switch  from 'react-flexible-switch';
+import CurveChart from './Chart';
 var React = require('react');
 
 class BondedTokenAdvanced extends React.Component {
@@ -16,6 +17,18 @@ class BondedTokenAdvanced extends React.Component {
         </div>
         {this.props.advanced && (
         <div className=" --BondedTokenAdvanced-open">
+
+          <div className="--bondedToken-flex --bondedTokenTransact">
+            <div>Token Address</div>
+            <div>
+              <label className="">
+                <input
+                  type="text"
+                  value={this.props.address}
+                  onChange={event => this.props.onChange(event, 'address')} />
+              </label>
+            </div>
+          </div>  
 
           <div className="--bondedToken-flex --bondedTokenTransact">
             <div>Pool Balance</div>
@@ -79,7 +92,7 @@ class BondedTokenAdvanced extends React.Component {
                 onChange={event => this.props.onChange(event, 'totalSupply')} /> )}
             </div>
           </div>
-
+          <CurveChart chartData={this.props.chartData}/>
         </div>
         )}
       </div>

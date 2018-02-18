@@ -38,21 +38,20 @@ class BondedToken extends React.Component {
           totalSupply={this.state.totalSupply}
           tokenBalance={this.state.tokenBalance}
           walletBalance={this.state.walletBalance}
-          address={this.props.address}
+          address={this.state.address}
           toggleBuy={this.toggleBuy}
           isBuy={this.state.isBuy} />
 
-        <BondedTokenAdvanced 
+        <BondedTokenAdvanced
+          chartData={this.chartData}
           bigMax={this.bigMax}
           onChange={this.onChange}
           balance={this.state.balance}
           ratio={this.state.ratio}
           totalSupply={this.state.totalSupply}
-          address={this.props.address}
+          address={this.state.address}
           advanced={this.state.advanced}
           toggleAdvanced={this.toggleAdvanced} />
-
-        {this.documentReady ? <CurveChart data={this.state.chartData}/> : null}
 
   {/*      <pre style={{'textAlign':'left'}}>
         {JSON.stringify(this.state).split(',').join(',\n')}
@@ -78,6 +77,7 @@ class BondedToken extends React.Component {
 
     this.bigMax = 1000000
     this.state = {
+      address: this.props.address,
       advanced: false,
       loading: false,
       walletBalance: 0,
@@ -95,30 +95,26 @@ class BondedToken extends React.Component {
       isBuy: true,
       amount: 0,
       readOnly: false,
-      chartData: null,
     };
-    this.getDataPool = this.getDataPool.bind(this);
+    this.getChartData = this.getChartData.bind(this);
     this.documentReady = false;
+    this.chartData = {}
   }
 
   componentDidMount() {
     this.documentReady = true;
-    this.getDataPool();
-    this.forceUpdate();
+    this.getChartData(this.state);
   }
 
   componentWillUnmount () {
     clearInterval(this.pollingInterval)
   }
 
+  componentWillUpdate(newProps, newState) {
+    this.getChartData(newState);
+  }
   // events
 
-  accountChange () {
-    this.setState({ account: this.relevantCoin.account})
-  }
-  networkChange () {
-    this.setState({ network: this.relevantCoin.network})
-  }
   toggleBuy () {
     if (this.state.loading) return
     this.setState({
@@ -136,8 +132,6 @@ class BondedToken extends React.Component {
     let foo = {}
     foo[type] = event.target.value
     this.setState(foo);
-    this.getDataPool();
-
   }
   submit () {
     if (this.state.amount <= 0 || this.state.loading) return
@@ -192,33 +186,26 @@ class BondedToken extends React.Component {
     }
   }
 
-  getDataPool () {
+  getChartData (props) {
     // if (this.data) return this.data;
     let data = [];
-    let { totalSupply, ratio, balance } = this.state;
+    let { totalSupply, ratio, balance } = props;
     let step = Math.round(totalSupply / 100);
-    let currentPrice;
+    let price = balance / ( ratio * totalSupply );
+    let currentPrice = { supply: totalSupply, value: price };
+
     for(let i = step; i< totalSupply * 1.5; i += step) {
       if( i < totalSupply) {
-        let eth = 1 * this.calculateSaleReturn({ ...this.state, amount: totalSupply - i });
-        let price = (parseInt(balance, 10) - eth) / ( ratio * i );
+        let eth = 1 * this.calculateSaleReturn({ ...props, amount: totalSupply - i });
+        let price = (parseFloat(balance, 10) - eth) / ( ratio * i );
         data.push({ supply: i, sell: price, value: price});
       } else if (i > totalSupply) {
-        if (!currentPrice) {
-          // let price = balance / ( ratio * totalSupply );
-          // data.push({ supply: totalSupply, current: price });
-          // data.push({ supply: totalSupply, buy: price, value: price });
-          // data.push({ supply: totalSupply, sell: price, value: price });
-          currentPrice = true;
-        }
-        let eth = 1 * this.calculateBuyPrice({ ...this.state, amount: i - totalSupply });
-
-        let price = (eth + parseInt(balance, 10)) / ( ratio * i );
-
+        let eth = 1 * this.calculateBuyPrice({ ...props, amount: i - totalSupply });
+        let price = (eth + parseFloat(balance, 10)) / ( ratio * i );
         data.push({ supply: 1 * i, buy: price, value: 1 * price });
       }
     }
-    this.setState({ chartData: data })
+    this.chartData = { data, currentPrice };
     return data;
   }
 
@@ -371,7 +358,7 @@ class BondedToken extends React.Component {
   checkNetwork () {
     return global.web3.eth.net.getId((err, netId) => {
       if (err) console.error(err)
-      if (!err && this.state.network !== netId) {
+      if (!err && this.state.network !== netId && this.relevantCoin) {
         this.setState({ network: netId})
         return this.relevantCoin.deployContract()
       }
@@ -398,7 +385,7 @@ class BondedToken extends React.Component {
 
 
   checkBalances () {
-    if (!this.props.address) return Promise.resolve()
+    if (!this.state.address) return Promise.resolve()
     return this.checkToken()
     .then(this.checkPool.bind(this))
     .then(this.checkSupply.bind(this))
