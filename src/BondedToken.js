@@ -61,12 +61,14 @@ class BondedToken extends React.Component {
 
   constructor(props) {
     super(props);
-    if (props.address) {
-      this.relevantCoin = new RelevantCoin({ address: props.address })
+
+    this.addresses = {
+      5777: '0xf25186b5081ff5ce73482ad761db0eb0d25abfbf',
+      99: '0x1daa59378d955a19cb30701b07eac7b2f048e736',
+      4: '0x5df73d8fd2d8e6c6de24b731bdc295b2d915d0e9'
     }
-    this.initWeb3().catch((error) => {
-      console.log(error)
-    })
+
+
     this.toggleAdvanced = this.toggleAdvanced.bind(this)
     this.toggleBuy = this.toggleBuy.bind(this)
     this.submit = this.submit.bind(this)
@@ -101,9 +103,17 @@ class BondedToken extends React.Component {
   }
 
   componentDidMount() {
-    this.documentReady = true;
-    this.getChartData(this.state);
-    this.forceUpdate();
+    console.log('init start')
+    this.relevantCoin = new RelevantCoin()
+    this.initWeb3().catch((error) => {
+      console.log(error)
+    }).then(() => {
+      console.log('init done?')
+      this.documentReady = true;
+      this.getChartData(this.state);
+      this.forceUpdate();
+    })
+
   }
 
   componentWillUnmount () {
@@ -136,7 +146,7 @@ class BondedToken extends React.Component {
       if (!utils.isAddress(event.target.value)) {
         return
       } else {
-        this.relevantCoin = new RelevantCoin({ address: event.target.value })
+        this.relevantCoin.deployContract(event.target.value)
       }
     }
     if (this.state.loading) return
@@ -322,6 +332,8 @@ class BondedToken extends React.Component {
       if (web3Provider) {
         global.web3 = new Web3(web3Provider)
         this.startChecking()
+      } else {
+        reject()
       }
 
     })
@@ -341,7 +353,8 @@ class BondedToken extends React.Component {
   }
 
   check () {
-    this.checkNetwork()
+
+    return this.checkNetwork()
     .then(this.checkAccount.bind(this))
     .then(this.checkEth.bind(this))
     .then(this.checkBalances.bind(this))
@@ -352,12 +365,21 @@ class BondedToken extends React.Component {
   }
 
   checkNetwork () {
-    return global.web3.eth.net.getId((err, netId) => {
-      if (err) console.error(err)
-      if (!err && this.state.network !== netId && this.relevantCoin) {
-        this.setState({ network: netId})
-        return this.relevantCoin.deployContract()
-      }
+    return new Promise((resolve, reject) => {
+      global.web3.eth.net.getId((err, netId) => {
+        if (err) reject(err)
+        if (!err && this.state.network !== netId && this.relevantCoin) {
+          console.log(this.addresses)
+          let address = this.addresses[netId]
+          console.log('address', address)
+          this.setState({ 
+            address,
+            network: netId
+          })
+          this.relevantCoin.deployContract(address)
+          resolve()
+        }
+      })
     })
   }
 
@@ -405,6 +427,7 @@ class BondedToken extends React.Component {
     })
   }
   checkToken () {
+    console.log('checkToken')
     return this.relevantCoin.balanceOf(this.state.account).then((balance) => {
       if (this.state.tokenBalanceWei !== balance) {
         return this.relevantCoin.decimals().then((decimals) => {
