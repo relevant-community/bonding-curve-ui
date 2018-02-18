@@ -63,7 +63,9 @@ class BondedToken extends React.Component {
 
   constructor(props) {
     super(props);
-    this.relevantCoin = new RelevantCoin({address: props.address})
+    if (props.address) {
+      this.relevantCoin = new RelevantCoin({ address: props.address })
+    }
     this.initWeb3().catch((error) => {
       console.log(error)
     })
@@ -199,7 +201,7 @@ class BondedToken extends React.Component {
     for(let i = step; i< totalSupply * 1.5; i += step) {
       if( i < totalSupply) {
         let eth = 1 * this.calculateSaleReturn({ ...this.state, amount: totalSupply - i });
-        let price = (balance - eth) / ( ratio * i );
+        let price = (parseInt(balance, 10) - eth) / ( ratio * i );
         data.push({ supply: i, sell: price, value: price});
       } else if (i > totalSupply) {
         if (!currentPrice) {
@@ -207,13 +209,11 @@ class BondedToken extends React.Component {
           // data.push({ supply: totalSupply, current: price });
           // data.push({ supply: totalSupply, buy: price, value: price });
           // data.push({ supply: totalSupply, sell: price, value: price });
-          // currentPrice = true;
+          currentPrice = true;
         }
         let eth = 1 * this.calculateBuyPrice({ ...this.state, amount: i - totalSupply });
-        console.log('eth ', eth);
 
-        let price = (eth + balance) / ( ratio * i );
-        console.log('price ', price);
+        let price = (eth + parseInt(balance, 10)) / ( ratio * i );
 
         data.push({ supply: 1 * i, buy: price, value: 1 * price });
       }
