@@ -21,7 +21,7 @@ class CurveChart extends React.Component {
     if (!this.props.chartData) return;
     if (!this.props.documentReady) return;
     let { data, currentPrice } = this.props.chartData;
-    let width = Math.min(600, window.innerWidth - 30);
+    let width = Math.min(600, (window.innerWidth < 480 ? window.innerWidth : 480) - 30);
     let height = width * 2/3;
     return (
       <div >
