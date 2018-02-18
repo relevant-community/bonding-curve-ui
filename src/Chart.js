@@ -1,17 +1,19 @@
 import React from 'react';
 const Recharts = require('recharts');
-const {AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceDot} = Recharts;
+const {AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceDot, ScatterChart} = Recharts;
 
+console.log(Recharts)
 
 class CurveChart extends React.Component {
   render () {
     if (!this.props.chartData) return;
+    if (!this.props.documentReady) return;
     let { data, currentPrice } = this.props.chartData;
     let sellData = data.map(d => d.sell ? { supply: d.supply, value: d.sell } : null).filter(d => d);
     let buyData = data.map(d => d.buy ? { supply: d.supply, value: d.buy } : null).filter(d => d);
     return (
       <div className='chart'>
-        <LineChart
+        <AreaChart
           width={600}
           height={400}
           data={data}
@@ -21,10 +23,10 @@ class CurveChart extends React.Component {
           <XAxis dataKey="supply" />
           <YAxis/>
           <Tooltip/>
-          <ReferenceDot alwaysShow x={'0'} y={'0'} label="Current price" r={20} fill="red" stroke="none" />
+          <ReferenceDot alwaysShow={true} x={0} y={0} r={20} fill="red" stroke="red" />
 
-          <Line dots={false} dataKey="value"  name={'curve'} key={'curve'} stackId="1" stroke='blue' fill='none'/>
-        </LineChart>
+          <Area dataKey="value"  name={'price'} key={'price'} stroke='blue' fill='none'/>
+        </AreaChart>
       </div>
     )
   }

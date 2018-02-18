@@ -92,7 +92,7 @@ class BondedTokenAdvanced extends React.Component {
                 onChange={event => this.props.onChange(event, 'totalSupply')} /> )}
             </div>
           </div>
-          <CurveChart chartData={this.props.chartData}/>
+          <CurveChart documentReady={this.props.documentReady} chartData={this.props.chartData}/>
         </div>
         )}
       </div>

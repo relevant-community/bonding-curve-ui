@@ -43,6 +43,7 @@ class BondedToken extends React.Component {
           isBuy={this.state.isBuy} />
 
         <BondedTokenAdvanced
+          documentReady={this.documentReady}
           chartData={this.chartData}
           bigMax={this.bigMax}
           onChange={this.onChange}
@@ -111,7 +112,11 @@ class BondedToken extends React.Component {
   }
 
   componentWillUpdate(newProps, newState) {
-    this.getChartData(newState);
+    let { totalSupply, ratio, balance } = this.state;
+    let { totalSupplyN, ratioN, balanceN } = newState;
+    if ( totalSupply != totalSupplyN || ratio !== ratioN || balance !== balanceN) {
+      this.getChartData(newState);
+    }
   }
   // events
 
