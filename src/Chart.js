@@ -15,6 +15,7 @@ const {
   ComposedChart
 } = Recharts;
 
+
 console.log(Recharts)
 
 class CurveChart extends React.Component {
@@ -22,12 +23,6 @@ class CurveChart extends React.Component {
     if (!this.props.chartData) return;
     if (!this.props.documentReady) return;
     let { data, currentPrice } = this.props.chartData;
-    let sellData = data.map(d => d.sell ? { supply: d.supply, value: d.sell } : null).filter(d => d);
-    let buyData = data.map(d => d.buy ? { supply: d.supply, value: d.buy } : null).filter(d => d);
-
-    console.log(currentPrice);
-
-
     return (
       <div className='chart'>
         <ComposedChart
@@ -38,21 +33,23 @@ class CurveChart extends React.Component {
         >
           <CartesianGrid strokeDasharray="3 3"/>
           <XAxis dataKey="supply" type={'number'} />
-          <YAxis dataKey="value" type={'number'}/>
+          <YAxis dataKey="value" type={'number'} />
           <Tooltip/>
+
+          <Area isAnimationActive={false} dots={false} stackOffset={'none'} dataKey="value" name={'price'} key={'price'} stroke='blue' fill='none'/>
+
+          <Area isAnimationActive={false} stackOffset={'none'} dataKey="sell" stroke="blue" fill='blue' />
 
           <ReferenceDot
             isFront={true}
             alwaysShow={true}
-            label={'current price'}
+            // label={'current price'}
             x={currentPrice.supply}
             y={currentPrice.value}
-            r={10}
+            r={8}
             fill="blue"
+            stroke="none"
           />
-
-          <Area type="monotone" dataKey="sell" stroke="none" fill='pink' />
-          <Line dots={false} dataKey="value"  name={'price'} key={'price'} stroke='blue' fill='none'/>
 
 
         </ComposedChart>

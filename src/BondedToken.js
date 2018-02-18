@@ -4,8 +4,8 @@ import './BondedToken.css';
 import BondedTokenHeader  from './BondedTokenHeader';
 import BondedTokenTransact  from './BondedTokenTransact.js';
 import BondedTokenAdvanced  from './BondedTokenAdvanced.js';
-import {Decimal} from 'decimal.js';
-import CurveChart from './Chart';
+// import {Decimal} from 'decimal.js';
+
 var BigNumber = require('bignumber.js');
 const Web3 = require('web3')
 const utils = require('web3-utils')
@@ -201,9 +201,10 @@ class BondedToken extends React.Component {
     let price = balance / ( ratio * totalSupply );
     let currentPrice = { supply: totalSupply, value: price };
 
-    for(let i = step; i< totalSupply * 1.5; i += step) {
+    for(let i = step; i < totalSupply * 1.5; i += step) {
       if( i < totalSupply) {
-        let eth = 1 * this.calculateSaleReturn({ ...props, amount: totalSupply - i });
+        totalSupply = new BigNumber(totalSupply)
+        let eth = 1 * this.calculateSaleReturn({ ...props, amount: totalSupply.minus(i).toString(10)});
         let price = (parseFloat(balance, 10) - eth) / ( ratio * i );
         data.push({ supply: i, sell: price, value: price});
       } else if (i > totalSupply) {
@@ -218,96 +219,79 @@ class BondedToken extends React.Component {
 
   // methods
 
+  // calculateSaleReturn
+  // Return = _connectorBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_connectorWeight / 1000000)))
   calculateSaleReturn (props) {
     let { totalSupply, balance, ratio, amount } = props || this.state;
-    if (!totalSupply || !balance || !ratio || !amount) return 'N/A'
-    let _supply = new BigNumber(totalSupply)
-    let _connectorBalance = new BigNumber(balance)
-    let _connectorWeight = new Decimal(ratio)
-    let _sellAmount = new BigNumber(amount)
-    if (_supply.eq('0') || _connectorBalance.eq('0') || _connectorWeight.eq('0')) return 'N/A'
-    if (_sellAmount.eq('0'))
+    if (!totalSupply || !balance || !ratio || !amount) return '0'
+
+    let _supply = parseInt(totalSupply, 10)
+    let _connectorBalance = parseInt(balance, 10)
+    let _connectorWeight = parseFloat(ratio, 10)
+    let _sellAmount = parseInt(amount, 10)
+    if (_supply === 0 || _connectorBalance === 0 || _connectorWeight === 0) return '0'
+    if (_sellAmount === 0)
       return '0';
-    if (_sellAmount.eq(_supply))
+    if (_sellAmount === _supply)
       return _connectorBalance.toString()
-    if (_connectorWeight.eq('1'))
+    if (_connectorWeight === 1)
       return _connectorBalance.toString()
+    // console.log(Math.pow((1 - (_sellAmount / _supply)) , (1 / _connectorWeight)))
 
     // Return = _connectorBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_connectorWeight / 1000000)))
-    let one = new BigNumber('1')
+    return _connectorBalance * (1 - Math.pow((1 - (_sellAmount / _supply)) , (1 / _connectorWeight)))
 
-    let foo = new Decimal(
-      one.minus(
-        _sellAmount.div(_supply)
-      ).toString()
-    );
-    BigNumber.config({ DECIMAL_PLACES: 4 });
-    return _connectorBalance.times(
-      one.minus(
-        foo.pow(
-          one.div(_connectorWeight).toString()
-        ).toString()
-      )
-    ).toString(10)
   }
 
   calculateBuyPrice(props) {
     let { totalSupply, balance, ratio, amount } = props || this.state;
-    if (!totalSupply || !balance || !ratio || !amount) return 'N/A'
-    let _supply = new BigNumber(totalSupply)
-    let _connectorBalance = new BigNumber(balance)
-    let _connectorWeight = new Decimal(ratio)
-    let _buyAmount = new BigNumber(amount)
-    if (_supply.eq('0') || _connectorBalance.eq('0') || _connectorWeight.eq('0')) return 'N/A'
-    if (_buyAmount.eq('0'))
+    if (!totalSupply || !balance || !ratio || !amount) return '0'
+    let _supply = parseInt(totalSupply, 10)
+    let _connectorBalance = parseInt(balance, 10)
+    let _connectorWeight = parseFloat(ratio, 10)
+    let _buyAmount = parseInt(amount, 10)
+    if (_supply === 0 || _connectorBalance === 0 || _connectorWeight === 0) return '0'
+    if (_buyAmount === 0)
       return '0';
+    return _connectorBalance * (Math.pow((1 + (_buyAmount / _supply)), (1 / _connectorWeight)) - 1)
 
-    // Return = _connectorBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_connectorWeight / 1000000)))
-    let one = new BigNumber('1');
-
-    let foo = new Decimal(
-      one.plus(
-        _buyAmount.div(_supply)
-      ).toString()
-    );
-    BigNumber.config({ DECIMAL_PLACES: 4 });
-    return _connectorBalance.times(
-        foo.pow(
-          one.div(_connectorWeight).toString()
-        )
-        .minus(one.toString())
-    ).toString(10)
+    let foo = 1 + (_buyAmount / _supply)
+    return _connectorBalance * (Math.pow(foo, (1 / _connectorWeight)) - 1)
   }
 
+  // calculatePurchaseReturn
+  // Return = _supply * ((1 + _depositAmount / _connectorBalance) ^ (_connectorWeight / 1000000) - 1)
   calculatePurchaseReturn(props) {
     let { totalSupply, balance, ratio, amount } = props || this.state;
-    if (!totalSupply || !balance || !ratio || !amount) return 'N/A'
-    let _supply = new BigNumber(totalSupply)
-    let _connectorBalance = new BigNumber(balance)
-    let _connectorWeight = new Decimal(ratio)
-    let _depositAmount = new BigNumber(this.state.amount)
-    if (_supply.eq('0') || _connectorBalance.eq('0') || _connectorWeight.eq('0') || _depositAmount.eq('0')) return 'N/A'
+    if (!totalSupply || !balance || !ratio || !amount) return '0'
+    let _supply = parseInt(totalSupply, 10)
+    let _connectorBalance = parseInt(balance, 10)
+    let _connectorWeight = parseFloat(ratio, 10)
+    let _depositAmount = parseInt(this.state.amount, 10)
+    if (_supply === 0 || _connectorBalance === 0 || _connectorWeight === 0 || _depositAmount === 0) return '0'
 
     // special case if the weight = 100%
-    if (_connectorWeight.eq('1'))
-      return _supply.times(_depositAmount).div(_connectorBalance).toString()
+    if (_connectorWeight === 1)
+      return _supply * (_depositAmount / _connectorBalance)
 
+    // console.log(Math.pow((1 + _depositAmount / _connectorBalance) , (_connectorWeight)))
     //Return = _supply * ((1 + _depositAmount / _connectorBalance) ^ (_connectorWeight / 1000000) - 1)
+    return _supply * (Math.pow((1 + _depositAmount / _connectorBalance) , (_connectorWeight)) - 1)
 
-    let goo = _depositAmount
-      .div(_connectorBalance)
-      .plus('1')
+    // let goo = _depositAmount
+    //   .div(_connectorBalance)
+    //   .plus('1')
 
-    let foo = new Decimal(
-      goo.toString()
-    ).pow(_connectorWeight)
-    BigNumber.config({ DECIMAL_PLACES: 4 });
+    // let foo = new Decimal(
+    //   goo.toString()
+    // ).pow(_connectorWeight)
+    // BigNumber.config({ DECIMAL_PLACES: 4 });
 
-    return _supply.times(
-      (
-        foo
-      ).minus('1')
-    ).toString(10)
+    // return _supply.times(
+    //   (
+    //     foo
+    //   ).minus('1')
+    // ).toString(10)
   }
 
 
@@ -403,6 +387,7 @@ class BondedToken extends React.Component {
   }
 
   checkEth () {
+    if (!this.state.account) return
     return global.web3.eth.getBalance(this.state.account, (error, balance) => {
       if (error) throw new Error(error)
       if (this.state.walletBalanceWei !== balance) {
